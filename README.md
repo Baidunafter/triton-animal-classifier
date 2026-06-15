@@ -1,48 +1,166 @@
-# Triton Animal Classifier (cat / dog / horse)
+# 🚀 Triton ML Inference Stack
 
-Развёртывание ResNet50-модели классификации животных на NVIDIA Triton Inference Server с FastAPI-шлюзом, мониторингом через Prometheus + Grafana и нагрузочным тестированием с разными конфигурациями Dynamic Batching.
+Полнофункциональный пример развёртывания ML-модели с использованием NVIDIA Triton Inference Server, FastAPI в качестве API-шлюза и стека мониторинга Prometheus + Grafana.
 
-## Архитектура
+---
 
-- **Triton Inference Server 24.05** — обслуживает ONNX-модель через gRPC (порт 8001) и HTTP (8000), метрики на 8002
-- **FastAPI Gateway** — REST API для клиентов, обращается к Triton по gRPC; имена входа/выхода определяются автоматически из метаданных модели
-- **Prometheus** — собирает метрики с Triton и FastAPI
-- **Grafana** — визуализация метрик (auto-provisioned дашборд)
-- **`config.pbtxt`** — минимальный (без блоков `input`/`output`, Triton сам читает из ONNX), `kind: KIND_AUTO`
-- **Healthcheck для Triton + `depends_on: service_healthy`** для API — корректный порядок запуска
+> 📚 **Материалы занятия:** [**Google Colab**](https://colab.research.google.com/drive/1pSiIDSUiMMkNlO1gJJdzqNn_HMX2CQiy?usp=sharing)
 
-## Быстрый старт
+---
+
+## 🎯 Преимущества архитектуры
+
+### NVIDIA Triton Inference Server
+- **Высокая производительность** — оптимизированный инференс с низкой задержкой
+- **Динамический батчинг** — автоматическое объединение запросов для увеличения пропускной способности
+- **Горячая замена моделей** — обновление без перезапуска сервера
+- **Мульти-фреймворк** — поддержка ONNX, TensorFlow, PyTorch, TensorRT и других
+- **GPU-ускорение** — эффективное использование видеокарт NVIDIA
+- **Версионирование** — одновременная работа нескольких версий модели
+
+### FastAPI Gateway
+- **Валидация данных** — автоматическая проверка входных параметров через Pydantic
+- **Препроцессинг** — нормализация данных перед отправкой в модель
+- **Документация** — автогенерация Swagger UI
+- **Простой REST API** — удобный интерфейс для клиентов
+
+### Мониторинг (Prometheus + Grafana)
+- **Метрики в реальном времени** — отслеживание latency, throughput, ошибок
+- **Готовые дашборды** — визуализация состояния системы
+- **Основа для алертинга** — возможность настройки оповещений
+
+---
+
+## 📋 Стек
+
+| Компонент | Назначение |
+|-----------|-----------|
+| **NVIDIA Triton** | Высокопроизводительный инференс ONNX-модели |
+| **FastAPI** | REST API Gateway с валидацией |
+| **Prometheus** | Сбор метрик |
+| **Grafana** | Визуализация и дашборды |
+
+## 📁 Структура проекта
+
+```
+triton-ml-project/
+├── docker-compose.yml                      # Оркестрация всех сервисов
+├── test_client.py                          # Скрипт стресс-тестирования API
+│
+├── model_repository/                       # Репозиторий моделей Triton
+│   └── california_housing/                 # Директория модели (имя = имя модели)
+│       ├── config.pbtxt                    # Конфигурация: батчинг, бэкенд, инстансы
+│       ├── scaler.pkl                      # StandardScaler для нормализации признаков
+│       └── 1/                              # Версия модели (1, 2, 3...)
+│           └── model.onnx                  # Обученная модель в формате ONNX
+│
+├── api/                                    # FastAPI Gateway
+│   ├── Dockerfile                          # Сборка образа на базе python:3.10-slim
+│   ├── requirements.txt                    # Зависимости: fastapi, tritonclient, numpy
+│   └── main.py                             # Логика API: валидация, препроцессинг, вызов Triton
+│
+├── prometheus/                             # Система сбора метрик
+│   └── prometheus.yml                      # Конфигурация: targets, интервалы scrape
+│
+└── grafana/                                # Система визуализации
+    └── provisioning/
+        ├── datasources/
+        │   └── datasources.yml             # Подключение Prometheus как источника данных
+        └── dashboards/
+            ├── dashboards.yml              # Настройка автозагрузки дашбордов
+            └── triton.json                 # Дашборд: RPS, latency, счётчики, очередь
+```
+
+## ⚡ Быстрый старт
 
 ```bash
-# 1. Положите свою обученную модель в корень проекта: best_resnet50.keras
+git clone https://github.com/Alexandre77777/triton-ml-project.git
+cd triton-ml-project
+docker-compose up -d
+```
 
-# 2. Сконвертируйте в ONNX:
-pip install tensorflow tf2onnx onnx onnxruntime
-python convert_to_onnx.py
+## ✅ Проверка
 
-# 3. Поднимите весь стек:
-docker compose up -d --build
-
-# 4. Проверьте:
+```bash
+# Health check
 curl http://localhost:8080/health
-curl -X POST -F "file=@cat.jpg" http://localhost:8080/predict
+
+# Предсказание
+curl -X POST http://localhost:8080/predict \
+  -H "Content-Type: application/json" \
+  -d '{"instances": {"MedInc": 8.3, "HouseAge": 41, "AveRooms": 6.9, "AveBedrms": 1.0, "Population": 322, "AveOccup": 2.5, "Latitude": 37.88, "Longitude": -122.23}}'
 ```
 
-## Endpoints
+## 🔌 Сервисы
 
-- API Swagger: http://localhost:8080/docs
-- Grafana: http://localhost:3000 (admin / admin)
-- Prometheus: http://localhost:9090
-- Triton metrics: http://localhost:8002/metrics
+| Сервис | URL | Описание |
+|--------|-----|----------|
+| **FastAPI** | http://localhost:8080 | REST API |
+| **Swagger UI** | http://localhost:8080/docs | Документация API |
+| **Triton HTTP** | http://localhost:8000 | Triton HTTP API |
+| **Triton gRPC** | localhost:8001 | Triton gRPC API |
+| **Triton Metrics** | http://localhost:8002/metrics | Метрики Prometheus |
+| **Prometheus** | http://localhost:9090 | Web UI |
+| **Grafana** | http://localhost:3000 | Дашборды (admin/admin) |
+| **Мониторинг Triton** | http://localhost:3000/d/triton-ml | Дашборд инференса |
 
-## Нагрузочное тестирование
+## 📡 API Endpoints
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `GET` | `/` | Информация об API |
+| `GET` | `/health` | Проверка состояния |
+| `GET` | `/docs` | Swagger UI |
+| `POST` | `/predict` | Предсказание цены |
+
+### Пример запроса
+
+```json
+{
+  "instances": [
+    {
+      "MedInc": 8.3252,
+      "HouseAge": 41.0,
+      "AveRooms": 6.984,
+      "AveBedrms": 1.024,
+      "Population": 322.0,
+      "AveOccup": 2.556,
+      "Latitude": 37.88,
+      "Longitude": -122.23
+    }
+  ]
+}
+```
+
+## ⚙️ Конфигурация Triton
+
+- **Backend:** `onnxruntime`
+- **Max batch size:** `32`
+- **Dynamic batching:** `4, 8, 16, 32`
+- **Max queue delay:** `100ms`
+
+## 🧪 Тестирование
 
 ```bash
-pip install aiohttp pillow
-python load_test.py                # одиночный прогон
-python benchmark_batching.py       # все 4 конфигурации Dynamic Batching
+python test_client.py
 ```
 
-## GPU-режим
+## 🎮 Поддержка GPU
 
-В `docker-compose.yml` раскомментируйте блок `deploy.resources.reservations.devices` под сервисом `triton`. С `kind: KIND_AUTO` в `config.pbtxt` Triton автоматически переключится на GPU.
+Раскомментируйте в `docker-compose.yml`:
+
+```yaml
+deploy:
+  resources:
+    reservations:
+      devices:
+        - driver: nvidia
+          count: all
+          capabilities: [gpu]
+```
+
+## 📝 Требования
+
+- Docker и Docker Compose
+- ~4GB RAM (режим CPU)
+- NVIDIA GPU + nvidia-docker (опционально)

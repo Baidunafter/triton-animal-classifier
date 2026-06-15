@@ -1,6 +1,6 @@
 best_resnet50.keras
 model_repository/image_classifier/1/model.onnx
-animals/
+#animals/
 __pycache__/
 *.pyc
 .venv/
