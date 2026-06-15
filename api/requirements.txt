@@ -3,6 +3,7 @@ uvicorn[standard]==0.30.6
 python-multipart==0.0.9
 pydantic==2.9.2
 pillow==10.4.0
+aiohttp==3.14.1
 numpy==1.26.4
 tritonclient[grpc]==2.49.0
 prometheus-client==0.20.0
