@@ -1,0 +1,14 @@
+best_resnet50.keras
+model_repository/image_classifier/1/model.onnx
+animals/
+__pycache__/
+*.pyc
+.venv/
+venv/
+load_results.json
+benchmark_results.json
+benchmark_results.png
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

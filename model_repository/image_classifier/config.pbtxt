@@ -1,0 +1,25 @@
+# Имя модели — должно совпадать с названием папки
+name: "image_classifier"
+
+# Бэкенд для исполнения ONNX моделей
+backend: "onnxruntime"
+
+# Максимальный размер батча
+max_batch_size: 32
+
+# Динамический батчинг — собирает несколько запросов в один батч
+dynamic_batching {
+  preferred_batch_size: [ 4, 8, 16, 32 ]
+  max_queue_delay_microseconds: 100000
+}
+
+# Настройка исполнения модели
+instance_group [
+  {
+    count: 1
+    kind: KIND_AUTO  # GPU если доступен, иначе CPU
+  }
+]
+
+# Примечание: секции input и output не нужны —
+# Triton автоматически прочитает их из ONNX файла.

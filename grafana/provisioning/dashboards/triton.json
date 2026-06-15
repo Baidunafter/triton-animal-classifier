@@ -1,0 +1,29 @@
+{
+  "title": "Triton Inference Monitoring",
+  "uid": "triton-inference",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": {"from": "now-15m", "to": "now"},
+  "panels": [
+    {"id": 1, "title": "RPS", "type": "timeseries",
+     "gridPos": {"h": 7, "w": 12, "x": 0, "y": 0},
+     "targets": [{"expr": "rate(nv_inference_request_success[1m])", "legendFormat": "success", "refId": "A"},
+                 {"expr": "rate(nv_inference_request_failure[1m])", "legendFormat": "failure", "refId": "B"}]},
+    {"id": 2, "title": "Latency p50/p95/p99", "type": "timeseries",
+     "gridPos": {"h": 7, "w": 12, "x": 12, "y": 0},
+     "targets": [{"expr": "histogram_quantile(0.5, rate(nv_inference_request_duration_us_bucket[1m]))", "legendFormat": "p50", "refId": "A"},
+                 {"expr": "histogram_quantile(0.95, rate(nv_inference_request_duration_us_bucket[1m]))", "legendFormat": "p95", "refId": "B"},
+                 {"expr": "histogram_quantile(0.99, rate(nv_inference_request_duration_us_bucket[1m]))", "legendFormat": "p99", "refId": "C"}]},
+    {"id": 3, "title": "Queue size", "type": "timeseries",
+     "gridPos": {"h": 7, "w": 8, "x": 0, "y": 7},
+     "targets": [{"expr": "nv_inference_queue_duration_us", "refId": "A"}]},
+    {"id": 4, "title": "Total requests", "type": "stat",
+     "gridPos": {"h": 7, "w": 8, "x": 8, "y": 7},
+     "targets": [{"expr": "nv_inference_request_success", "legendFormat": "success", "refId": "A"},
+                 {"expr": "nv_inference_request_failure", "legendFormat": "failure", "refId": "B"}]},
+    {"id": 5, "title": "Avg queue time", "type": "timeseries",
+     "gridPos": {"h": 7, "w": 8, "x": 16, "y": 7},
+     "targets": [{"expr": "rate(nv_inference_queue_duration_us[1m]) / rate(nv_inference_request_success[1m])", "refId": "A"}]}
+  ]
+}
