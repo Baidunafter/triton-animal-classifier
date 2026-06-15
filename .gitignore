@@ -1,5 +1,5 @@
 best_resnet50.keras
-model_repository/image_classifier/1/model.onnx
+#model_repository/image_classifier/1/model.onnx
 #animals/
 __pycache__/
 *.pyc
