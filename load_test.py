@@ -12,7 +12,7 @@ import aiohttp
 API_URL = "http://localhost:8080/predict"
 IMAGES_DIR = "animals"
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
-TOTAL_REQUESTS = 200
+TOTAL_REQUESTS = 1000
 CONCURRENCY = 10
 TIMEOUT_S = 60
 
